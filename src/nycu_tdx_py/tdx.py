@@ -69,7 +69,7 @@ def Bus_Route(access_token, county):
 
 
 
-def Bus_Shape(access_token, county):
+def Bus_Shape(access_token, county, dtype="text"):
     url="https://tdx.transportdata.tw/api/basic/v2/Bus/Shape/City/"+county+"?&%24format=JSON"
     data_response=requests.get(url, headers=access_token)
     js_data=json.loads(data_response.text)
@@ -78,7 +78,42 @@ def Bus_Shape(access_token, county):
     bus_shape.RouteName=[bus_shape.RouteName[i]['Zh_tw'] if len(bus_shape.RouteName[i])!=0  else None for i in range(len(bus_shape))]
     bus_shape.SubRouteName=[bus_shape.SubRouteName[i]['Zh_tw'] if len(bus_shape.SubRouteName[i])!=0  else None for i in range(len(bus_shape))]
     bus_shape=bus_shape.loc[:,['RouteUID','RouteID','RouteName','SubRouteUID','SubRouteID','SubRouteName','Geometry']].rename(columns={'Geometry':'geometry'})
-    bus_shape['geometry']=bus_shape['geometry'].apply(wkt.loads)
-    bus_shape=gpd.GeoDataFrame(bus_shape, crs='epsg:4326')
+    
+    if dtype=="sf":
+        bus_shape['geometry']=bus_shape['geometry'].apply(wkt.loads)
+        bus_shape=gpd.GeoDataFrame(bus_shape, crs='epsg:4326')
     return(bus_shape)
+
+
+
+def Bus_StopOfRoute(access_token, county, dtype="text"):
+    url="https://tdx.transportdata.tw/api/basic/v2/Bus/StopOfRoute/City/"+county+"?&%24format=JSON"
+    data_response=requests.get(url, headers=access_token)
+    js_data=json.loads(data_response.text)
+    bus_stopofroute=pd.DataFrame.from_dict(js_data, orient="columns")
+    
+    bus_stopofroute.RouteName=[bus_stopofroute.RouteName[i]['Zh_tw'] if len(bus_stopofroute.RouteName[i])!=0  else None for i in range(len(bus_stopofroute))]
+    bus_stopofroute.SubRouteName=[bus_stopofroute.SubRouteName[i]['Zh_tw'] if len(bus_stopofroute.SubRouteName[i])!=0  else None for i in range(len(bus_stopofroute))]
+
+    bus_info=bus_stopofroute.loc[:,['RouteUID','RouteID','RouteName','SubRouteUID','SubRouteName','SubRouteID','Direction']]
+    stopnum=[len(bus_stopofroute.Stops[i]) for i in range(len(bus_stopofroute))]
+    
+    bus_stop=dict()
+    label_all=['StopUID','StopID','StopName','StopBoarding','StopSequence','StationID','StopPosition']
+    for label_id in label_all:
+        if label_id in ['StopName']:
+            bus_stop[label_id]=[bus_stopofroute.Stops[i][j][label_id]['Zh_tw'] if label_id in bus_stopofroute.Stops[i][j] else None for i in range(len(bus_stopofroute)) for j in range(len(bus_stopofroute.Stops[i]))]
+        else:
+            bus_stop[label_id]=[bus_stopofroute.Stops[i][j][label_id] if label_id in bus_stopofroute.Stops[i][j] else None for i in range(len(bus_stopofroute)) for j in range(len(bus_stopofroute.Stops[i]))]
+    bus_stop=pd.DataFrame(bus_stop)
+    bus_stop=pd.concat([bus_stop, pd.DataFrame(list(bus_stop.StopPosition)).loc[:,['PositionLon','PositionLat']]], axis=1)
+    
+    bus_info=bus_info.iloc[np.repeat(np.arange(len(bus_info)), stopnum)].reset_index(drop=True)
+    bus_stop=bus_stop.loc[:,['StopUID','StopID','StopName','StationID','StopBoarding','StopSequence','PositionLon','PositionLat']]
+    bus_stopofroute=pd.concat([bus_info, bus_stop], axis=1)
+    
+    if dtype=="sf":
+        bus_stopofroute['geometry']=gpd.points_from_xy(bus_stopofroute.PositionLon, bus_stopofroute.PositionLat, crs="EPSG:4326")
+        bus_stopofroute=gpd.GeoDataFrame(bus_stopofroute, crs='epsg:4326')
+    return(bus_stopofroute)
     

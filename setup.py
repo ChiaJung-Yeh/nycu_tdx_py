@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nycu_tdx_py',
-    version='0.1.10',
+    version='0.1.11',
     license='NYCU',
     author="Robert Yeh",
     author_email='robert1328.mg10@nycu.edu.tw',
