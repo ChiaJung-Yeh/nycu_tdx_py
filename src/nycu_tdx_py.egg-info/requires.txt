@@ -2,5 +2,4 @@ pandas
 geopandas
 numpy
 shapely
-json
 requests
