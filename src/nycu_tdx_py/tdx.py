@@ -45,6 +45,20 @@ def get_token(app_id, app_key):
 
 
 
+def tdx_railway():
+    railway=pd.DataFrame({'Operator':['臺鐵','高鐵','臺北捷運','高雄捷運','桃園捷運','新北捷運','臺中捷運','高雄輕軌','阿里山森林鐵路'],
+                          'Code':['TRA','THSR','TRTC','KRTC','TYMC','NTDLRT','TMRT','KLRT','AFR']})
+    return(railway)
+
+    
+    
+def tdx_county():
+    county=pd.DataFrame({'Operator':['臺北市','新北市','桃園市','臺中市','臺南市','高雄市','基隆市','新竹市','新竹縣','苗栗縣','彰化縣','南投縣','雲林縣','嘉義縣','嘉義市','屏東縣','宜蘭縣','花蓮縣','臺東縣','金門縣','澎湖縣','連江縣','公路客運'],
+                         'Code':['Taipei','NewTaipei',"Taoyuan","Taichung","Tainan","Kaohsiung","Keelung","Hsinchu","HsinchuCounty","MiaoliCounty","ChanghuaCounty","NantouCounty","YunlinCounty","ChiayiCounty","Chiayi","PingtungCounty","YilanCounty","HualienCounty","TaitungCounty","KinmenCounty","PenghuCounty","LienchiangCounty","Intercity"]})
+    return(county)
+
+
+
 def Bus_Route(access_token, county):
     url="https://tdx.transportdata.tw/api/basic/v2/Bus/Route/City/"+county+"?&%24format=JSON"
     data_response=requests.get(url, headers=access_token)
@@ -69,7 +83,15 @@ def Bus_Route(access_token, county):
 
 
 
-def Bus_Shape(access_token, county, dtype="text"):
+def Bus_Shape(access_token, county, dtype="text", out=False):
+    if out!=False:
+        if dtype=="text":
+            if ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+                return("Export file of 'text' must contain '.csv' or '.txt'!")
+        if dtype=="sf":
+            if ~pd.Series(out).str.contains('shp')[0]:
+                return("Export file of 'sf' must contain '.shp'!")
+            
     url="https://tdx.transportdata.tw/api/basic/v2/Bus/Shape/City/"+county+"?&%24format=JSON"
     data_response=requests.get(url, headers=access_token)
     js_data=json.loads(data_response.text)
@@ -79,14 +101,30 @@ def Bus_Shape(access_token, county, dtype="text"):
     bus_shape.SubRouteName=[bus_shape.SubRouteName[i]['Zh_tw'] if len(bus_shape.SubRouteName[i])!=0  else None for i in range(len(bus_shape))]
     bus_shape=bus_shape.loc[:,['RouteUID','RouteID','RouteName','SubRouteUID','SubRouteID','SubRouteName','Geometry']].rename(columns={'Geometry':'geometry'})
     
-    if dtype=="sf":
+    if dtype=="text":
+        if out!=False:
+            bus_shape.to_csv(out, index=False)
+        return(bus_shape)
+    elif dtype=="sf":
         bus_shape['geometry']=bus_shape['geometry'].apply(wkt.loads)
         bus_shape=gpd.GeoDataFrame(bus_shape, crs='epsg:4326')
-    return(bus_shape)
+        if out!=False:
+            bus_shape.to_file(out, index=False)
+        return(bus_shape)
 
 
 
-def Bus_StopOfRoute(access_token, county, dtype="text"):
+def Bus_StopOfRoute(access_token, county, dtype="text", out=False):
+    if out!=False:
+        if dtype=="text":
+            if ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+                return("Export file of 'text' must contain '.csv' or '.txt'!")
+        elif dtype=="sf":
+            if ~pd.Series(out).str.contains('shp')[0]:
+                return("Export file of 'sf' must contain '.shp'!")
+        else:
+            return("'dtype' must be 'text' or 'sf'!")
+            
     url="https://tdx.transportdata.tw/api/basic/v2/Bus/StopOfRoute/City/"+county+"?&%24format=JSON"
     data_response=requests.get(url, headers=access_token)
     js_data=json.loads(data_response.text)
@@ -112,8 +150,53 @@ def Bus_StopOfRoute(access_token, county, dtype="text"):
     bus_stop=bus_stop.loc[:,['StopUID','StopID','StopName','StationID','StopBoarding','StopSequence','PositionLon','PositionLat']]
     bus_stopofroute=pd.concat([bus_info, bus_stop], axis=1)
     
-    if dtype=="sf":
+    if dtype=="text":
+        if out!=False:
+            bus_stopofroute.to_csv(out, index=False)
+        return(bus_stopofroute)
+    elif dtype=="sf":
         bus_stopofroute['geometry']=gpd.points_from_xy(bus_stopofroute.PositionLon, bus_stopofroute.PositionLat, crs="EPSG:4326")
         bus_stopofroute=gpd.GeoDataFrame(bus_stopofroute, crs='epsg:4326')
-    return(bus_stopofroute)
+        if out!=False:
+            bus_stopofroute.to_file(out, index=False)
+        return(bus_stopofroute)
+
+
+
+def Rail_Shape(access_token, operator, dtype="text", out=False):
+    if out!=False:
+        if dtype=="text":
+            if ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+                return("Export file of 'text' must contain '.csv' or '.txt'!")
+        elif dtype=="sf":
+            if ~pd.Series(out).str.contains('shp')[0]:
+                return("Export file of 'sf' must contain '.shp'!")
+        
+    if operator=='TRA':
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/TRA/Shape?&%24format=JSON"
+    elif operator=='THSR':
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/THSR/Shape?%24format=JSON"
+    elif operator in ["TRTC", "KRTC", "TYMC", "NTDLRT",  "TMRT", "KLRT"]:
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/Shape/"+operator+"?&%24format=JSON"
+    elif operator=='AFR':
+        return('AFR does not provide route geometry data up to now! Please check out other rail system.')
+    else:
+        print("'", operator, "' is not allowed operator. Please check out the table of railway code above")
+        return(tdx_railway())
+    data_response=requests.get(url, headers=access_token)
+    js_data=json.loads(data_response.text)
+    rail_shape=pd.DataFrame.from_dict(js_data, orient="columns")
     
+    rail_shape.LineName=[rail_shape.LineName[i]['Zh_tw'] if len(rail_shape.LineName[i])!=0  else None for i in range(len(rail_shape))]
+    rail_shape=rail_shape.loc[:,['LineID','LineName','Geometry']].rename(columns={'Geometry':'geometry'})
+
+    if dtype=="text":
+        if out!=False:
+            rail_shape.to_csv(out, index=False)
+        return(rail_shape)
+    elif dtype=="sf":
+        rail_shape['geometry']=rail_shape['geometry'].apply(wkt.loads)
+        rail_shape=gpd.GeoDataFrame(rail_shape, crs='epsg:4326')
+        if out!=False:
+            rail_shape.to_file(out, index=False)
+        return(rail_shape)    
