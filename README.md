@@ -19,11 +19,9 @@ Guide](https://chiajung-yeh.github.io/TDX_Guide/)** website.
 
 ## Installation
 
-Please install the package from Github (ChiaJung-Yeh/NYCU\_TDX).
+Please install the package via following pip code.
 
-    install.packages("devtools")
-    devtools::install_github("ChiaJung-Yeh/NYCU_TDX")
-    library(TDX)
+    pip install nycu-tdx-py
 
 ## Usage
 
