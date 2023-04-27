@@ -34,6 +34,8 @@ Take retrieving bus stops of Taipei City for example. The
 code is shown below. Here the argument `client_id` and `client_secret`
 is the authentication key applied from TDX.
 
+    from nycu_tdx_py import tdx
+    
     # get the access token first
     access_token=tdx.get_token("CLIENT_ID", "CLIEN_SECRET")
 

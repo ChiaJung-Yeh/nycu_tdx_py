@@ -1,4 +1,4 @@
-README.rst
+README.md
 setup.cfg
 setup.py
 src/nycu_tdx_py/__init__.py
