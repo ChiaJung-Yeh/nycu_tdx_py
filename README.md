@@ -3,7 +3,7 @@
 <img src="./figure/TDX_icon.png" width="30%" style="display: block; margin: auto;" />
 
 This package can be used to connect transportation data from TDX
-(Transport Data eXchange) in a neat and efficient way. TDX platform is
+(Transport Data eXchange) in a neat and efficient way in Python. TDX platform is
 supported by Ministry of Transportation and Communications (MOTC) in
 Taiwan, which provides lots of API for the members download the
 transportation data. Before using the function provided in this package,
