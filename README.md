@@ -13,7 +13,7 @@ of TDX, you will soon get the Client Id and Client Secret, please check
 out in the [API key
 Dashboard](https://tdx.transportdata.tw/user/dataservice/key).
 
-If you are R user, please find the packages on Github via `devtools::install_github("ChiaJung-Yeh/NYCU_TDX")`,
+If you are R user, please install the packages on Github via `devtools::install_github("ChiaJung-Yeh/NYCU_TDX")`,
 and all of the functions can be found in  **[TDX
 Guide](https://chiajung-yeh.github.io/TDX_Guide/)** website.
 
