@@ -241,9 +241,9 @@ def Bus_TravelTime(access_token, county, routeid, out=False):
     bus_traveltime=pd.DataFrame()
     for busrouteid in tqdm(routeid):
         if county=="Intercity":
-            url="https://tdx.transportdata.tw/api/basic/v2/Bus/S2STravelTime/City/"+"Taipei"+"/"+busrouteid+"?&%24format=JSON"
+             url="https://tdx.transportdata.tw/api/basic/v2/Bus/S2STravelTime/InterCity/"+busrouteid+"?&%24format=JSON"
         elif county in list(tdx_county().Code):
-            url="https://tdx.transportdata.tw/api/basic/v2/Bus/S2STravelTime/City/"+"Taipei"+"/"+busrouteid+"?&%24format=JSON"
+             url="https://tdx.transportdata.tw/api/basic/v2/Bus/S2STravelTime/City/"+county+"/"+busrouteid+"?&%24format=JSON"
         else:
             print("'"+county+"' is not valid county. Please check out the table of railway code below.")
             return(tdx_county())
