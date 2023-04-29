@@ -89,6 +89,9 @@ def Bus_Route(access_token, county, out=False):
     bus_info=bus_info.iloc[np.repeat(np.arange(len(bus_info)), subroutenum)].reset_index(drop=True)
     bus_route=pd.concat([bus_info, pd.DataFrame(bus_subroute)], axis=1)
     bus_route.RouteName=[bus_route.RouteName[i]['Zh_tw'] for i in range(len(bus_route))]
+    
+    if out!=False:
+        bus_route.to_csv(out, index=False)
     return(bus_route)
 
 
@@ -281,4 +284,7 @@ def Bus_TravelTime(access_token, county, routeid, out=False):
         subroute_info=pd.concat([subroute_info, traveltime_info], axis=1).reset_index(drop=True)
 
         bus_traveltime=pd.concat([bus_traveltime, subroute_info]).reset_index(drop=True)
+    
+    if out!=False:
+        bus_traveltime.to_csv(out, index=False)
     return(bus_traveltime)
