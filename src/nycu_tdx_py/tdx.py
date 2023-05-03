@@ -5,6 +5,7 @@ from shapely import wkt
 import requests
 import json
 from tqdm import tqdm
+import warnings
 
 
 def get_token(app_id, app_key):
@@ -58,20 +59,20 @@ def tdx_county():
 
 def Bus_Route(access_token, county, out=False):
     if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
-        return("Export file must contain '.csv' or '.txt'!")
+        return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
     
     if county=="Intercity":
         url="https://tdx.transportdata.tw/api/basic/v2/Bus/Route/InterCity?%24format=JSON"
     elif county in list(tdx_county().Code):
         url="https://tdx.transportdata.tw/api/basic/v2/Bus/Route/City/"+county+"?&%24format=JSON"
     else:
-        print("'"+county+"' is not valid county. Please check out the table of railway code below.")
-        return(tdx_county())
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
         data_response=requests.get(url, headers=access_token)
     except:
-        return("Your access token is invalid!")
+        return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
     bus_route=pd.DataFrame.from_dict(js_data, orient="columns")
     
@@ -99,25 +100,25 @@ def Bus_Route(access_token, county, out=False):
 def Bus_Shape(access_token, county, dtype="text", out=False):
     if dtype=="text":
         if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
-            return("Export file of 'text' must contain '.csv' or '.txt'!")
+            return(warnings.warn("Export file of 'text' must contain '.csv' or '.txt'!", UserWarning))
     elif dtype=="sf":
         if out!=False and ~pd.Series(out).str.contains('shp')[0]:
-            return("Export file of 'sf' must contain '.shp'!")
+            return(warnings.warn("Export file of 'sf' must contain '.shp'!", UserWarning))
     else:
-        return("'dtype' must be 'text' or 'sf'!")
+        return(warnings.warn("'dtype' must be 'text' or 'sf'!", UserWarning))
     
     if county=="Intercity":
         url="https://tdx.transportdata.tw/api/basic/v2/Bus/Shape/InterCity?&$format=JSON"
     elif county in list(tdx_county().Code):
         url="https://tdx.transportdata.tw/api/basic/v2/Bus/Shape/City/"+county+"?&%24format=JSON"
     else:
-        print("'"+county+"' is not valid county. Please check out the table of railway code below.")
-        return(tdx_county())
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
         data_response=requests.get(url, headers=access_token)
     except:
-        return("Your access token is invalid!")
+        return(warnings.warn("Your access token is invalid!"), UserWarning)
     js_data=json.loads(data_response.text)
     bus_shape=pd.DataFrame.from_dict(js_data, orient="columns")
     
@@ -141,25 +142,25 @@ def Bus_Shape(access_token, county, dtype="text", out=False):
 def Bus_StopOfRoute(access_token, county, dtype="text", out=False):
     if dtype=="text":
         if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
-            return("Export file of 'text' must contain '.csv' or '.txt'!")
+            return(warnings.warn("Export file of 'text' must contain '.csv' or '.txt'!", UserWarning))
     elif dtype=="sf":
         if out!=False and ~pd.Series(out).str.contains('shp')[0]:
-            return("Export file of 'sf' must contain '.shp'!")
+            return(warnings.warn("Export file of 'sf' must contain '.shp'!", UserWarning))
     else:
-        return("'dtype' must be 'text' or 'sf'!")
+        return(warnings.warn("'dtype' must be 'text' or 'sf'!", UserWarning))
     
     if county=="Intercity":
         url="https://tdx.transportdata.tw/api/basic/v2/Bus/StopOfRoute/InterCity?&$format=JSON"
     elif county in list(tdx_county().Code):
         url="https://tdx.transportdata.tw/api/basic/v2/Bus/StopOfRoute/City/"+county+"?&%24format=JSON"
     else:
-        print("'"+county+"' is not valid county. Please check out the table of railway code below.")
-        return(tdx_county())
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
         data_response=requests.get(url, headers=access_token)
     except:
-        return("Your access token is invalid!")
+        return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
     bus_stopofroute=pd.DataFrame.from_dict(js_data, orient="columns")
     
@@ -199,12 +200,12 @@ def Bus_StopOfRoute(access_token, county, dtype="text", out=False):
 def Rail_Shape(access_token, operator, dtype="text", out=False):
     if dtype=="text":
         if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
-            return("Export file of 'text' must contain '.csv' or '.txt'!")
+            return(warnings.warn("Export file of 'text' must contain '.csv' or '.txt'!", UserWarning))
     elif dtype=="sf":
         if out!=False and ~pd.Series(out).str.contains('shp')[0]:
-            return("Export file of 'sf' must contain '.shp'!")
+            return(warnings.warn("Export file of 'sf' must contain '.shp'!", UserWarning))
     else:
-        return("'dtype' must be 'text' or 'sf'!")
+        return(warnings.warn("'dtype' must be 'text' or 'sf'!", UserWarning))
         
     if operator=='TRA':
         url="https://tdx.transportdata.tw/api/basic/v2/Rail/TRA/Shape?&%24format=JSON"
@@ -213,11 +214,15 @@ def Rail_Shape(access_token, operator, dtype="text", out=False):
     elif operator in ["TRTC", "KRTC", "TYMC", "NTDLRT",  "TMRT", "KLRT"]:
         url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/Shape/"+operator+"?&%24format=JSON"
     elif operator=='AFR':
-        return('AFR does not provide route geometry data up to now! Please check out other rail system.')
+        return(warnings.warn('AFR does not provide route geometry data up to now! Please check out other rail system.', UserWarning))
     else:
-        print("'", operator, "' is not valid operator. Please check out the table of railway code below.")
-        return(tdx_railway())
-    data_response=requests.get(url, headers=access_token)
+        print(tdx_railway())
+        return(warnings.warn("'"+operator+"' is not valid operator. Please check out the table of railway code above.", UserWarning))
+    
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!"), UserWarning)
     js_data=json.loads(data_response.text)
     rail_shape=pd.DataFrame.from_dict(js_data, orient="columns")
     
@@ -239,7 +244,7 @@ def Rail_Shape(access_token, operator, dtype="text", out=False):
     
 def Bus_TravelTime(access_token, county, routeid, out=False):
     if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
-        return("Export file must contain '.csv' or '.txt'!")
+        return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
     
     bus_traveltime=pd.DataFrame()
     for busrouteid in tqdm(routeid):
@@ -248,13 +253,13 @@ def Bus_TravelTime(access_token, county, routeid, out=False):
         elif county in list(tdx_county().Code):
              url="https://tdx.transportdata.tw/api/basic/v2/Bus/S2STravelTime/City/"+county+"/"+busrouteid+"?&%24format=JSON"
         else:
-            print("'"+county+"' is not valid county. Please check out the table of railway code below.")
-            return(tdx_county())
+            print(tdx_county())
+            return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
         
         try:
             data_response=requests.get(url, headers=access_token)
         except:
-            return("Your access token is invalid!")
+            return(warnings.warn("Your access token is invalid!", UserWarning))
         js_data=json.loads(data_response.text)
 
         subroute_info=dict()
@@ -288,3 +293,63 @@ def Bus_TravelTime(access_token, county, routeid, out=False):
     if out!=False:
         bus_traveltime.to_csv(out, index=False)
     return(bus_traveltime)
+
+
+
+def Rail_Station(access_token, operator, dtype="text", out=False):
+    if dtype=="text":
+        if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+            return(warnings.warn("Export file of 'text' must contain '.csv' or '.txt'!", UserWarning))
+    elif dtype=="sf":
+        if out!=False and ~pd.Series(out).str.contains('shp')[0]:
+            return(warnings.warn("Export file of 'sf' must contain '.shp'!", UserWarning))
+    else:
+        return(warnings.warn("'dtype' must be 'text' or 'sf'!", UserWarning))
+        
+    if operator=='TRA':
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/TRA/Station?&%24format=JSON"
+    elif operator=='THSR':
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/THSR/Station?&%24format=JSON"
+    elif operator in ["TRTC", "KRTC", "TYMC", "NTDLRT",  "TMRT", "KLRT"]:
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/Station/"+operator+"?&%24format=JSON"
+    elif operator=='AFR':
+        url="https://tdx.transportdata.tw/api/basic/v3/Rail/AFR/Station?&%24format=JSON"
+    else:
+        print(tdx_railway())
+        return(warnings.warn("'"+operator+"' is not valid operator. Please check out the table of railway code above.", UserWarning))
+    
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!", UserWarning))
+    js_data=json.loads(data_response.text)
+    
+    if operator=='TRA':
+        rail_station=pd.DataFrame.from_dict(js_data, orient="columns")
+        rail_station.StationName=[rail_station.StationName[i]["Zh_tw"] for i in range(len(rail_station))]
+        rail_station=pd.concat([rail_station, pd.DataFrame(list(rail_station.StationPosition)).loc[:,["PositionLon","PositionLat"]]], axis=1)
+        rail_station=rail_station.loc[:,['StationUID','StationID','StationName','StationAddress','StationPhone','LocationCity','LocationTown','PositionLon','PositionLat','StationClass']]
+    elif operator=="AFR":
+        rail_station=pd.DataFrame.from_dict(js_data, orient="columns")
+        rail_station=pd.DataFrame(list(rail_station.Stations))
+        rail_station.StationName=[rail_station.StationName[i]["Zh_tw"] for i in range(len(rail_station))]
+        rail_station=pd.concat([rail_station, pd.DataFrame(list(rail_station.StationPosition)).loc[:,["PositionLon","PositionLat"]]], axis=1)
+        rail_station=rail_station.loc[:,['StationUID','StationID','StationName','StationAddress','StationPhone','PositionLon','PositionLat','StationClass']]
+    else:
+        rail_station=pd.DataFrame.from_dict(js_data, orient="columns")
+        rail_station.StationName=[rail_station.StationName[i]["Zh_tw"] for i in range(len(rail_station))]
+        rail_station=pd.concat([rail_station, pd.DataFrame(list(rail_station.StationPosition)).loc[:,["PositionLon","PositionLat"]]], axis=1)
+        rail_station=rail_station.loc[:,['StationUID','StationID','StationName','StationAddress','PositionLon','PositionLat']]
+
+    if dtype=="text":
+        if out!=False:
+            rail_station.to_csv(out, index=False)
+        return(rail_station)
+    elif dtype=="sf":
+        rail_station['geometry']=gpd.points_from_xy(rail_station.PositionLon, rail_station.PositionLat, crs="EPSG:4326")
+        rail_station=gpd.GeoDataFrame(rail_station, crs='epsg:4326')
+        if out!=False:
+            rail_station.to_file(out, index=False)
+        return(rail_station)
+        
+        
