@@ -353,3 +353,84 @@ def Rail_Station(access_token, operator, dtype="text", out=False):
         return(rail_station)
         
         
+        
+def Rail_StationOfLine(access_token, operator, out=False):
+    if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+        return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
+
+    if operator=='TRA':
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/TRA/StationOfLine?&%24format=JSON"
+    elif operator=='THSR':
+        return(warnings.warn("Please use function 'Rail_Station' to retrieve the station of high speed rail (THSR).", UserWarning))
+    elif operator in ["TRTC", "KRTC", "TYMC", "NTDLRT",  "TMRT", "KLRT"]:
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/StationOfLine/"+operator+"?&%24format=JSON"
+    elif operator=='AFR':
+        url="https://tdx.transportdata.tw/api/basic/v3/Rail/AFR/StationOfLine?&%24format=JSON"
+    else:
+        print(tdx_railway())
+        return(warnings.warn("'"+operator+"' is not valid operator. Please check out the table of railway code above.", UserWarning))
+    
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!", UserWarning)) 
+    js_data=json.loads(data_response.text)
+    
+    if operator in ['AFR']:
+        js_data=js_data["StationOfLines"]
+    
+    rail_line=[js_data[i]["LineID"] for i in range(len(js_data))]
+    rail_line=pd.DataFrame({'LineID':rail_line})
+    num_of_station=[len(js_data[i]["Stations"]) for i in range(len(js_data))]
+    rail_line=rail_line.iloc[np.repeat(np.arange(len(rail_line)), num_of_station)].reset_index(drop=True)
+
+    rail_station_temp=dict()
+    label_all=['Sequence','StationID','StationName','TraveledDistance','CumulativeDistance']
+    for label_id in label_all:
+        if label_id in ['StationName'] and operator not in ['TRA']:
+            rail_station_temp[label_id]=[js_data[i]["Stations"][j][label_id]['Zh_tw'] if label_id in js_data[i]["Stations"][j] else None for i in range(len(js_data)) for j in range(len(js_data[i]["Stations"]))]
+        else:
+            rail_station_temp[label_id]=[js_data[i]["Stations"][j][label_id] if label_id in js_data[i]["Stations"][j] else None for i in range(len(js_data)) for j in range(len(js_data[i]["Stations"]))]
+    rail_station_temp=pd.DataFrame(rail_station_temp)
+    rail_station_line=pd.concat([rail_line, rail_station_temp], axis=1)
+
+    for label_id in ['TraveledDistance','CumulativeDistance']:
+        if sum(rail_station_line[label_id].isna())==len(rail_station_line):
+            rail_station_line=rail_station_line.drop([label_id], axis=1)
+    
+            
+    if operator=='TRA':
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/TRA/Line?&%24format=JSON"
+    elif operator=='AFR':
+        url="https://tdx.transportdata.tw/api/basic/v3/Rail/AFR/Line?&%24format=JSON"
+    else: 
+        url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/Line/"+operator+"?&%24format=JSON"
+    data_response=requests.get(url, headers=access_token)
+    js_data=json.loads(data_response.text)
+    
+    if operator=="AFR":
+        js_data=js_data["Lines"]
+
+    rail_line=dict()
+    label_all=['LineID','LineName','LineSectionName']
+    for label_id in label_all:
+        if label_id in ['LineName','LineSectionName']:
+            if operator=="TRA":
+                rail_line[label_id]=[js_data[i][label_id+'Zh'] if label_id+'Zh' in js_data[i] else None for i in range(len(js_data))]
+            else:
+                rail_line[label_id]=[js_data[i][label_id]['Zh_tw'] if label_id in js_data[i] and len(js_data[i][label_id])!=0 else None for i in range(len(js_data))]
+        else:
+            rail_line[label_id]=[js_data[i][label_id] if label_id in js_data[i] else None for i in range(len(js_data))]
+    rail_line=pd.DataFrame(rail_line)
+    for label_id in ['LineName','LineSectionName']:
+        if sum(rail_line[label_id].isna())==len(rail_line):
+            rail_line=rail_line.drop([label_id], axis=1)
+            
+    rail_station_line=pd.merge(rail_station_line, rail_line, on="LineID", how="left").reset_index(drop=True)
+
+    datacol=['LineID','LineName','LineSectionName','Sequence','StationID','StationName','TraveledDistance','CumulativeDistance']
+    tt=[i if datacol[i] in list(rail_station_line.columns) else None for i in range(len(datacol))]
+    tt=[i for i in tt if i is not None]
+    datacol=[datacol[i] for i in tt]
+    rail_station_line=rail_station_line.loc[:, datacol]
+    return(rail_station_line)
