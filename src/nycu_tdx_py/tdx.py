@@ -6,6 +6,7 @@ import requests
 import json
 from tqdm import tqdm
 import warnings
+from itertools import compress
 
 
 def get_token(app_id, app_key):
@@ -351,9 +352,9 @@ def Rail_Station(access_token, operator, dtype="text", out=False):
         if out!=False:
             rail_station.to_file(out, index=False)
         return(rail_station)
-        
-        
-        
+
+
+
 def Rail_StationOfLine(access_token, operator, out=False):
     if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
         return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
@@ -397,7 +398,6 @@ def Rail_StationOfLine(access_token, operator, out=False):
     for label_id in ['TraveledDistance','CumulativeDistance']:
         if sum(rail_station_line[label_id].isna())==len(rail_station_line):
             rail_station_line=rail_station_line.drop([label_id], axis=1)
-    
             
     if operator=='TRA':
         url="https://tdx.transportdata.tw/api/basic/v2/Rail/TRA/Line?&%24format=JSON"
@@ -434,3 +434,102 @@ def Rail_StationOfLine(access_token, operator, out=False):
     datacol=[datacol[i] for i in tt]
     rail_station_line=rail_station_line.loc[:, datacol]
     return(rail_station_line)
+    
+    
+    
+def Bike_Shape(access_token, county, dtype="text", out=False):
+    if dtype=="text":
+        if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+            return(warnings.warn("Export file of 'text' must contain '.csv' or '.txt'!", UserWarning))
+    elif dtype=="sf":
+        if out!=False and ~pd.Series(out).str.contains('shp')[0]:
+            return(warnings.warn("Export file of 'sf' must contain '.shp'!", UserWarning))
+    else:
+        return(warnings.warn("'dtype' must be 'text' or 'sf'!", UserWarning))
+    
+    if county in list(tdx_county().Code):
+        url="https://tdx.transportdata.tw/api/basic/v2/Cycling/Shape/City/"+county+"?&%24format=JSON"
+    else:
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
+
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!", UserWarning)) 
+    js_data=json.loads(data_response.text)
+    
+    if "Message" in js_data:
+        return(warnings.warn("'"+county+"' does not provide cycling network in TDX platform up to now.", UserWarning))
+
+    bike_shape=pd.DataFrame.from_dict(js_data, orient="columns")
+    bike_shape=bike_shape.loc[:,['RouteName','City','RoadSectionStart','RoadSectionEnd','CyclingLength','Direction','Geometry']].rename(columns={'Geometry':'geometry'})
+    
+    # revise the invalid geometry record
+    for i in range(len(bike_shape)):
+        temp=bike_shape.loc[i, 'geometry']
+        temp=temp.replace("MULTILINESTRING ((", "")
+        temp=temp.replace("))", "")
+        temp=temp.split("),(")
+        temp_count=[temp[i].count(" ") for i in range(len(temp))]
+        fil=[temp_count[i]!=1 for i in range(len(temp_count))]
+        if sum([not elem for elem in fil])!=0:        
+            temp=list(compress(temp, fil))
+            temp="MULTILINESTRING (("+("),(".join(temp))+"))"
+            bike_shape.loc[i, 'geometry']=temp
+    
+    if dtype=="text":
+        if out!=False:
+            rail_shape.to_csv(out, index=False)
+        return(bike_shape)
+    elif dtype=="sf":
+        bike_shape['geometry']=bike_shape['geometry'].apply(wkt.loads)
+        bike_shape=gpd.GeoDataFrame(bike_shape, crs='epsg:4326')
+        if out!=False:
+            bike_shape.to_file(out, index=False)
+        return(bike_shape)
+    
+    
+    
+def Bike_Station(access_token, county, dtype="text", out=False):
+    if dtype=="text":
+        if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+            return(warnings.warn("Export file of 'text' must contain '.csv' or '.txt'!", UserWarning))
+    elif dtype=="sf":
+        if out!=False and ~pd.Series(out).str.contains('shp')[0]:
+            return(warnings.warn("Export file of 'sf' must contain '.shp'!", UserWarning))
+    else:
+        return(warnings.warn("'dtype' must be 'text' or 'sf'!", UserWarning))
+        
+    if county in list(tdx_county().Code):
+        url="https://tdx.transportdata.tw/api/basic/v2/Bike/Station/City/"+county+"?&%24format=JSON"
+    else:
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
+    
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!", UserWarning))
+    js_data=json.loads(data_response.text)
+    
+    if "Message" in js_data:
+        return(warnings.warn("'"+county+"' does not provide bike sharing system.", UserWarning))
+
+    bike_station=pd.DataFrame.from_dict(js_data, orient="columns")
+    bike_station.StationName=[bike_station.StationName[i]["Zh_tw"] for i in range(len(bike_station))]
+    bike_station.StationAddress=[bike_station.StationAddress[i]["Zh_tw"] if len(bike_station.StationAddress[0])!=0 else None for i in range(len(bike_station))]
+    bike_station=pd.concat([bike_station, pd.DataFrame(list(bike_station.StationPosition)).loc[:,["PositionLon","PositionLat"]]], axis=1)
+    bike_station=bike_station.loc[:,['StationUID','StationID','StationName','StationAddress','PositionLon','PositionLat','BikesCapacity','ServiceType']]
+
+    if dtype=="text":
+        if out!=False:
+            bike_station.to_csv(out, index=False)
+        return(bike_station)
+    elif dtype=="sf":
+        bike_station['geometry']=gpd.points_from_xy(bike_station.PositionLon, bike_station.PositionLat, crs="EPSG:4326")
+        bike_station=gpd.GeoDataFrame(bike_station, crs='epsg:4326')
+        if out!=False:
+            bike_station.to_file(out, index=False)
+        return(bike_station)
+        
