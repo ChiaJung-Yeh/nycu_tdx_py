@@ -58,6 +58,13 @@ def tdx_county():
 
 
 
+def tdx_roadclass():
+    road=pd.DataFrame({'RoadClassName':["國道","省道快速公路","省道一般公路","以上全部"],
+                         'RoadClass':["0","1","3","ALL"]})
+    return(road)
+    
+    
+    
 def Bus_Route(access_token, county, out=False):
     if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
         return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
@@ -480,7 +487,7 @@ def Bike_Shape(access_token, county, dtype="text", out=False):
     
     if dtype=="text":
         if out!=False:
-            rail_shape.to_csv(out, index=False)
+            bike_shape.to_csv(out, index=False)
         return(bike_shape)
     elif dtype=="sf":
         bike_shape['geometry']=bike_shape['geometry'].apply(wkt.loads)
@@ -532,4 +539,187 @@ def Bike_Station(access_token, county, dtype="text", out=False):
         if out!=False:
             bike_station.to_file(out, index=False)
         return(bike_station)
+
+
+    
+def Bus_Schedule(access_token, county, out=False):
+    if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+        return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
+    
+    if county=="Intercity":
+        url="https://tdx.transportdata.tw/api/basic/v2/Bus/Schedule/InterCity?&$format=JSON"
+    elif county in list(tdx_county().Code):
+        url="https://tdx.transportdata.tw/api/basic/v2/Bus/Schedule/City/"+county+"?&%24format=JSON"
+    else:
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
+    
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!", UserWarning))
+    js_data=json.loads(data_response.text)
+    
+    freq_tag=[len(js_data[i]['Frequencys']) if 'Frequencys' in js_data[i] else 0 for i in range(len(js_data))]
+    time_tag=[len(js_data[i]['Timetables']) if 'Timetables' in js_data[i] else 0 for i in range(len(js_data))]
+
+    route_info=dict()
+    label_all=['RouteUID','RouteID','RouteName','SubRouteUID','SubRouteID','SubRouteName','Direction']
+    for label_id in label_all:
+        route_info[label_id]=[js_data[i][label_id] if label_id in js_data[i] else None for i in range(len(js_data))]
+    route_info=pd.DataFrame(route_info)
+
+    route_info.RouteName=[route_info.RouteName[i]["Zh_tw"] for i in range(len(route_info))]
+    route_info.SubRouteName=[route_info.SubRouteName[i]["Zh_tw"] for i in range(len(route_info))]
+    route_info_freq=route_info.iloc[np.repeat(np.arange(len(route_info)), np.array(freq_tag))].reset_index(drop=True)
+    route_info_time=route_info.iloc[np.repeat(np.arange(len(route_info)), np.array(time_tag))].reset_index(drop=True)
+
+
+    freq_data=pd.DataFrame()
+    label_all=['StartTime','EndTime','MinHeadwayMins','MaxHeadwayMins','ServiceDay']
+    for temp_id in range(len(freq_tag)):
+        if freq_tag[temp_id]!=0:
+            freq_temp=dict()
+            for label_id in label_all:
+                freq_temp[label_id]=[js_data[temp_id]['Frequencys'][i][label_id] if label_id in js_data[temp_id]['Frequencys'][i] else None for i in range(len(js_data[temp_id]['Frequencys']))]
+                freq_temp=pd.DataFrame(freq_temp)
+            freq_data=pd.concat([freq_data, freq_temp]).reset_index(drop=True)
+    freq_data=pd.concat([freq_data, pd.DataFrame(list(freq_data.ServiceDay))], axis=1).drop(['ServiceDay'], axis=1)
+    route_info_freq=pd.concat([route_info_freq, freq_data], axis=1)
+
+    time_data=pd.DataFrame()
+    label_all=['TripID','ServiceDay','StopTimes']
+    for temp_id in range(len(time_tag)):
+        if time_tag[temp_id]!=0:
+            time_temp=dict()
+            for label_id in label_all:
+                time_temp[label_id]=[js_data[temp_id]['Timetables'][i][label_id] if label_id in js_data[temp_id]['Timetables'][i] else None for i in range(len(js_data[temp_id]['Timetables']))]
+                time_temp=pd.DataFrame(time_temp)
+            time_data=pd.concat([time_data, time_temp]).reset_index(drop=True)
+    time_data=pd.concat([time_data, pd.DataFrame(list(time_data.ServiceDay))], axis=1).drop(['ServiceDay'], axis=1)
+
+    temp=list(time_data.StopTimes)
+    label_all=['StopSequence','StopUID','StopID','StopName','ArrivalTime','DepartureTime']
+    for label_id in label_all:
+        time_data[label_id]=[temp[i][0][label_id] for i in range(len(time_data))]
+    time_data.StopName=[time_data.StopName[i]['Zh_tw'] if len(time_data.StopName[i])!=0  else None for i in range(len(time_data))]
+    time_data=time_data.drop(['StopTimes'], axis=1)
+    route_info_time=pd.concat([route_info_time, time_data], axis=1)
+
+    route_schedule=pd.concat([route_info_freq, route_info_time]).reset_index(drop=True)
+    
+    if out!=False:
+        route_schedule.to_csv(out, index=False)
+    return(route_schedule)
+    
+
+
+def Bus_RouteFare(access_token, county, out=False):
+    if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+        return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
+    
+    if county=="Intercity":
+        url="https://tdx.transportdata.tw/api/basic/v2/Bus/RouteFare/InterCity?&$format=JSON"
+    elif county in list(tdx_county().Code):
+        url="https://tdx.transportdata.tw/api/basic/v2/Bus/RouteFare/City/"+county+"?&%24format=JSON"
+    else:
+        print(tdx_county())
+        return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
+    
+    try:
+        data_response=requests.get(url, headers=access_token)
+    except:
+        return(warnings.warn("Your access token is invalid!", UserWarning))
+    
+    js_data=json.loads(data_response.text)
+    
+    if "Message" in js_data:
+        return(warnings.warn("'"+county+"' does not provide fare data up to now.", UserWarning))
+    
+    route_info=dict()
+    label_all=['RouteID','RouteName','OperatorID','OperatorNo','SubRouteID','SubRouteName','FarePricingType','IsFreeBus','IsForAllSubRoutes']
+    for label_id in label_all:
+        route_info[label_id]=[js_data[i][label_id] if label_id in js_data[i] else None for i in range(len(js_data))]
+    route_info=pd.DataFrame(route_info)
+    
+    if route_info.FarePricingType[0]==0:
+        bufferzone=list()
+        nodata=[dict({'SectionSequence':None, 'Direction':None, 'FareBufferZoneOrigin':{'StopID':None, 'StopName':None}, 'FareBufferZoneDestination':{'StopID':None, 'StopName':None}})]
+        for i in range(len(js_data)):
+            if len(js_data[i]['SectionFares'][0]['BufferZones'])!=0:
+                bufferzone=bufferzone+js_data[i]['SectionFares'][0]['BufferZones']
+            else:
+                bufferzone=bufferzone+nodata
+
+        bufferzone=pd.DataFrame(bufferzone)
+        bufferzone=pd.concat([bufferzone, pd.DataFrame(list(bufferzone.FareBufferZoneOrigin))], axis=1).drop(['FareBufferZoneOrigin'], axis=1)
+        bufferzone=pd.concat([bufferzone, pd.DataFrame(list(bufferzone.FareBufferZoneDestination))], axis=1).drop(['FareBufferZoneDestination'], axis=1)
+
+        num_of_buffer=[len(js_data[i]['SectionFares'][0]['BufferZones']) for i in range(len(js_data))]
+        num_of_buffer=[1 if num_of_buffer[i]==0 else num_of_buffer[i] for i in range(len(num_of_buffer))]
+        route_info_buffer=route_info.iloc[np.repeat(np.arange(len(route_info)), num_of_buffer)].reset_index(drop=True)
+        route_buffer=pd.concat([route_info_buffer, bufferzone], axis=1)
+
+        sectionfare=list()
+        for i in range(len(js_data)):
+            sectionfare=sectionfare+js_data[i]['SectionFares'][0]['Fares']
+        sectionfare=pd.DataFrame(sectionfare)
+
+        num_of_fare=[len(js_data[i]['SectionFares'][0]['Fares']) for i in range(len(js_data))]
+        route_info_fare=route_info.iloc[np.repeat(np.arange(len(route_info)), num_of_fare)].reset_index(drop=True)
+        route_fare=pd.concat([route_info_fare, sectionfare], axis=1)
         
+        if out!=False:
+            route_buffer.to_csv(out[0:out.find('.csv')]+"_BufferZones.csv", index=False)
+            route_fare.to_csv(out[0:out.find('.csv')]+"_SectionFares.csv", index=False)
+        return(dict(BufferZones=route_buffer, SectionFares=route_fare))
+        
+    elif route_info.FarePricingType[0]==1:
+        num_of_odfare=[len(js_data[i]['ODFares']) if 'ODFares' in js_data[i] else 1 for i in range(len(js_data))]
+        odfare=list()
+        nodata=[dict({'Direction':None, 'OriginStop':None, 'DestinationStop':{'StopID':None, 'StopName':None}, 'Fares':None})]
+        for i in range(len(js_data)):
+            if 'ODFares' in js_data[i]:
+                odfare=odfare+js_data[i]['ODFares']
+            else:
+                odfare=odfare+nodata
+        odfare=pd.DataFrame(odfare)
+
+        odfare['OriginStopID']=[odfare.OriginStop[i]['StopID'] if odfare.OriginStop[i]!=None else None for i in range(len(odfare))]
+        odfare['OriginStopName']=[odfare.OriginStop[i]['StopName'] if odfare.OriginStop[i]!=None else None for i in range(len(odfare))]
+        odfare['DestinationStopID']=[odfare.DestinationStop[i]['StopID'] if odfare.DestinationStop[i]!=None else None for i in range(len(odfare))]
+        odfare['DestinationStopName']=[odfare.DestinationStop[i]['StopName'] if odfare.DestinationStop[i]!=None else None for i in range(len(odfare))]
+        odfare['TicketType']=[odfare.Fares[i][0]['TicketType'] if odfare.Fares[i]!=None else None for i in range(len(odfare))]
+        odfare['FareClass']=[odfare.Fares[i][0]['FareClass'] if odfare.Fares[i]!=None else None for i in range(len(odfare))]
+        odfare['Price']=[odfare.Fares[i][0]['Price'] if odfare.Fares[i]!=None else None for i in range(len(odfare))]
+        odfare=odfare.drop(['OriginStop','DestinationStop','Fares'], axis=1)
+        
+        if out!=False:
+            odfare.to_csv(out, index=False)
+        return(odfare)
+    
+    elif route_info.FarePricingType[0]==2:
+        sequence_pair_no=[len(js_data[i]['StageFares']) for i in range(len(js_data))]
+        route_info=route_info.iloc[np.repeat(np.arange(len(route_info)), sequence_pair_no)].reset_index(drop=True)
+
+        label_all=['Direction','OriginStage','DestinationStage','Fares']
+        stagefare=dict()
+        for label_id in label_all:
+            stagefare[label_id]=[js_data[i]['StageFares'][j][label_id] for i in range(len(js_data)) for j in range(len(js_data[i]['StageFares']))]
+
+        stagefare=pd.DataFrame(stagefare)
+        stagefare=pd.concat([stagefare, pd.DataFrame(list(stagefare.OriginStage)).rename(columns={'StopID':'OriginStopID','StopName':'OriginStopName','Sequence':'OriginSequence'})], axis=1).drop(['OriginStage'], axis=1)
+        stagefare=pd.concat([stagefare, pd.DataFrame(list(stagefare.DestinationStage)).rename(columns={'StopID':'DestinationStopID','StopName':'DestinationStopName','Sequence':'DestinationSequence'})], axis=1).drop(['DestinationStage'], axis=1)
+        num_of_fare=[len(stagefare.Fares[i]) for i in range(len(stagefare))]
+        route_info=route_info.iloc[np.repeat(np.arange(len(route_info)), num_of_fare)].reset_index(drop=True)
+
+        fare_all=list()
+        for i in range(len(stagefare)):
+            fare_all=fare_all+list(stagefare.Fares[i])
+        fare_all=pd.DataFrame(fare_all)
+        route_fare=pd.concat([route_info, fare_all], axis=1)
+        
+        if out!=False:
+            route_fare.to_csv(out, index=False)
+        return(route_fare)
+

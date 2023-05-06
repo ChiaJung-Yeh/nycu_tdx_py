@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: nycu-tdx-py
-Version: 0.1.35
+Version: 0.1.39
 Summary: Python library for connecting to TDX
 Home-page: https://github.com/ChiaJung-Yeh/nycu_tdx_py
 Author: Robert Yeh
