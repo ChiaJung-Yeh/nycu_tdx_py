@@ -179,7 +179,7 @@ def Bus_StopOfRoute(access_token, county, dtype="text", out=False):
     stopnum=[len(bus_stopofroute.Stops[i]) for i in range(len(bus_stopofroute))]
     
     bus_stop=dict()
-    label_all=['StopUID','StopID','StopName','StopBoarding','StopSequence','StationID','StopPosition']
+    label_all=['StopUID','StopID','StopName','StopBoarding','StopSequence','StationID','StopPosition','LocationCityCode']
     for label_id in label_all:
         if label_id in ['StopName']:
             bus_stop[label_id]=[bus_stopofroute.Stops[i][j][label_id]['Zh_tw'] if label_id in bus_stopofroute.Stops[i][j] else None for i in range(len(bus_stopofroute)) for j in range(len(bus_stopofroute.Stops[i]))]
@@ -189,7 +189,7 @@ def Bus_StopOfRoute(access_token, county, dtype="text", out=False):
     bus_stop=pd.concat([bus_stop, pd.DataFrame(list(bus_stop.StopPosition)).loc[:,['PositionLon','PositionLat']]], axis=1)
     
     bus_info=bus_info.iloc[np.repeat(np.arange(len(bus_info)), stopnum)].reset_index(drop=True)
-    bus_stop=bus_stop.loc[:,['StopUID','StopID','StopName','StationID','StopBoarding','StopSequence','PositionLon','PositionLat']]
+    bus_stop=bus_stop.loc[:,['StopUID','StopID','StopName','StationID','StopBoarding','StopSequence','PositionLon','PositionLat','LocationCityCode']]
     bus_stopofroute=pd.concat([bus_info, bus_stop], axis=1)
     
     if dtype=="text":

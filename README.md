@@ -40,7 +40,7 @@ is the authentication key applied from TDX.
     access_token=tdx.get_token("CLIENT_ID", "CLIEN_SECRET")
 
     # retrieve Taipei bus stops
-    taipei_bus=tdx.BusStopOfRoute(access_token, "Taipei")
+    taipei_bus=tdx.Bus_StopOfRoute(access_token, "Taipei")
 
 
 ## Support
