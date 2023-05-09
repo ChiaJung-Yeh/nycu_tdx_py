@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='nycu_tdx_py',
-    version='0.1.41',
+    version='0.1.42',
     description='Python library for connecting to TDX',
     long_description=long_description,
     long_description_content_type='text/markdown',

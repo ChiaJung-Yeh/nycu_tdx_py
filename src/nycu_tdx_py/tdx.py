@@ -88,7 +88,7 @@ def Bus_Route(access_token, county, out=False):
     subroutenum=[len(bus_route.SubRoutes[i]) for i in range(len(bus_route))]
     
     bus_subroute=dict()
-    label_all=['SubRouteUID','SubRouteID','SubRouteName','Direction']
+    label_all=['SubRouteUID','SubRouteID','SubRouteName','Direction','OperatorIDs','FirstBusTime','LastBusTime','OperatorIDs']
     for label_id in label_all:
         if label_id in ['SubRouteName']:
             bus_subroute[label_id]=[bus_route.SubRoutes[i][j][label_id]['Zh_tw'] if label_id in bus_route.SubRoutes[i][j] else None for i in range(len(bus_route)) for j in range(subroutenum[i])]
@@ -98,6 +98,10 @@ def Bus_Route(access_token, county, out=False):
     bus_info=bus_info.iloc[np.repeat(np.arange(len(bus_info)), subroutenum)].reset_index(drop=True)
     bus_route=pd.concat([bus_info, pd.DataFrame(bus_subroute)], axis=1)
     bus_route.RouteName=[bus_route.RouteName[i]['Zh_tw'] for i in range(len(bus_route))]
+    
+    for i in range(len(bus_route)):
+        tt=str(bus_route.OperatorIDs[i]).replace("[", ""); tt=tt.replace("]", ""); tt=tt.replace("'", "")
+        bus_route.loc[i,"OperatorIDs"]=tt
     
     if out!=False:
         bus_route.to_csv(out, index=False)
