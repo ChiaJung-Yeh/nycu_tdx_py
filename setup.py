@@ -7,13 +7,13 @@ with open("README.md", "r") as fh:
 
 setup(
     name='nycu_tdx_py',
-    version='0.1.42',
+    version='0.1.46',
     description='Python library for connecting to TDX',
     long_description=long_description,
     long_description_content_type='text/markdown',
     license='MIT',
-    author="Robert Yeh",
-    author_email='robert1328.mg10@nycu.edu.tw',
+    author="Chia-Jung (Robert) Yeh",
+    author_email='chia-jung.yeh@sydney.edu.au',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     url='https://github.com/ChiaJung-Yeh/nycu_tdx_py',

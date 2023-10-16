@@ -1,10 +1,10 @@
 Metadata-Version: 2.1
 Name: nycu-tdx-py
-Version: 0.1.42
+Version: 0.1.46
 Summary: Python library for connecting to TDX
 Home-page: https://github.com/ChiaJung-Yeh/nycu_tdx_py
-Author: Robert Yeh
-Author-email: robert1328.mg10@nycu.edu.tw
+Author: Chia-Jung (Robert) Yeh
+Author-email: chia-jung.yeh@sydney.edu.au
 License: MIT
 Keywords: tdx transport
 Description-Content-Type: text/markdown
@@ -63,6 +63,6 @@ This package takes advantage of API service provided by TDX, MOTC.
 ## Contact
 
 For questions, bugs, and other discussion, please feel free to contact
-the package maintainer, Chia Jung, Yeh.  
+the package maintainer, Chia-Jung (Robert), Yeh.  
 Email:
-<a href="mailto:robert1328.mg10@nycu.edu.tw"><u><robert1328.mg10@nycu.edu.tw></u></a>
+<a href="mailto:chia-jung.yeh@sydney.edu.au"><u><chia-jung.yeh@sydney.edu.au></u></a>

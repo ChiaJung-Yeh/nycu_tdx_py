@@ -52,6 +52,6 @@ This package takes advantage of API service provided by TDX, MOTC.
 ## Contact
 
 For questions, bugs, and other discussion, please feel free to contact
-the package maintainer, Chia Jung, Yeh.  
+the package maintainer, Chia-Jung (Robert), Yeh.  
 Email:
-<a href="mailto:robert1328.mg10@nycu.edu.tw"><u><robert1328.mg10@nycu.edu.tw></u></a>
+<a href="mailto:chia-jung.yeh@sydney.edu.au"><u><chia-jung.yeh@sydney.edu.au></u></a>

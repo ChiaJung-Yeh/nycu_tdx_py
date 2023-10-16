@@ -78,7 +78,7 @@ def Bus_Route(access_token, county, out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
@@ -128,7 +128,7 @@ def Bus_Shape(access_token, county, dtype="text", out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!"), UserWarning)
     js_data=json.loads(data_response.text)
@@ -170,7 +170,7 @@ def Bus_StopOfRoute(access_token, county, dtype="text", out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
@@ -232,7 +232,7 @@ def Rail_Shape(access_token, operator, dtype="text", out=False):
         return(warnings.warn("'"+operator+"' is not valid operator. Please check out the table of railway code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!"), UserWarning)
     js_data=json.loads(data_response.text)
@@ -269,7 +269,7 @@ def Bus_TravelTime(access_token, county, routeid, out=False):
             return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
         
         try:
-            data_response=requests.get(url, headers=access_token)
+            data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
         except:
             return(warnings.warn("Your access token is invalid!", UserWarning))
         js_data=json.loads(data_response.text)
@@ -331,7 +331,7 @@ def Rail_Station(access_token, operator, dtype="text", out=False):
         return(warnings.warn("'"+operator+"' is not valid operator. Please check out the table of railway code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
@@ -383,7 +383,7 @@ def Rail_StationOfLine(access_token, operator, out=False):
         return(warnings.warn("'"+operator+"' is not valid operator. Please check out the table of railway code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning)) 
     js_data=json.loads(data_response.text)
@@ -416,7 +416,7 @@ def Rail_StationOfLine(access_token, operator, out=False):
         url="https://tdx.transportdata.tw/api/basic/v3/Rail/AFR/Line?&%24format=JSON"
     else: 
         url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/Line/"+operator+"?&%24format=JSON"
-    data_response=requests.get(url, headers=access_token)
+    data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     js_data=json.loads(data_response.text)
     
     if operator=="AFR":
@@ -465,7 +465,7 @@ def Bike_Shape(access_token, county, dtype="text", out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
 
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning)) 
     js_data=json.loads(data_response.text)
@@ -519,7 +519,7 @@ def Bike_Station(access_token, county, dtype="text", out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
@@ -559,7 +559,7 @@ def Bus_Schedule(access_token, county, out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning))
     js_data=json.loads(data_response.text)
@@ -588,7 +588,8 @@ def Bus_Schedule(access_token, county, out=False):
                 freq_temp[label_id]=[js_data[temp_id]['Frequencys'][i][label_id] if label_id in js_data[temp_id]['Frequencys'][i] else None for i in range(len(js_data[temp_id]['Frequencys']))]
                 freq_temp=pd.DataFrame(freq_temp)
             freq_data=pd.concat([freq_data, freq_temp]).reset_index(drop=True)
-    freq_data=pd.concat([freq_data, pd.DataFrame(list(freq_data.ServiceDay))], axis=1).drop(['ServiceDay'], axis=1)
+    if len(freq_data)!=0:
+        freq_data=pd.concat([freq_data, pd.DataFrame(list(freq_data.ServiceDay))], axis=1).drop(['ServiceDay'], axis=1)
     route_info_freq=pd.concat([route_info_freq, freq_data], axis=1)
 
     time_data=pd.DataFrame()
@@ -631,7 +632,7 @@ def Bus_RouteFare(access_token, county, out=False):
         return(warnings.warn("'"+county+"' is not valid county. Please check out the table of county code above.", UserWarning))
     
     try:
-        data_response=requests.get(url, headers=access_token)
+        data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
     except:
         return(warnings.warn("Your access token is invalid!", UserWarning))
     
@@ -727,3 +728,116 @@ def Bus_RouteFare(access_token, county, out=False):
             route_fare.to_csv(out, index=False)
         return(route_fare)
 
+    
+
+def Rail_TimeTable(access_token, operator, record, out=False):
+    if out!=False and ~pd.Series(out).str.contains('\.csv|\.txt')[0]:
+        return(warnings.warn("Export file must contain '.csv' or '.txt'!", UserWarning))
+    
+    if record=="station":
+        if operator=="TRA":
+            url="https://tdx.transportdata.tw/api/basic/v3/Rail/TRA/GeneralStationTimetable?&$format=JSON"
+        elif operator=="THSR":
+            return(warnings.warn("THSR does not provide 'station' time table up to now! Please use 'general' time table.", UserWarning))
+        elif operator in ["TRTC","KRTC","TYMC","NTDLRT","KLRT"]:
+            url="https://tdx.transportdata.tw/api/basic/v2/Rail/Metro/StationTimeTable/"+operator+"?&%24format=JSON"
+        elif operator in ["TMRT","AFR"]:
+            return(warnings.warn(operator+" does not provide 'station' time table up to now! Please check out other rail system.", UserWarning))
+        else:
+            print(tdx_railway())
+            return(warnings.warn("'"+operator+"' is not allowed operator. Please check out the table of railway code above.", UserWarning))
+        
+        try:
+            data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
+            if operator=="TRA":
+                data_all=json.loads(data_response.text)['StationTimetables']
+            else:
+                data_all=json.loads(data_response.text)
+        except:
+            return(warnings.warn("Your access token is invalid!", UserWarning))
+
+        if operator=="TRA":
+            temp=pd.DataFrame(data_all)
+            temp.StationName=[temp.StationName[i]['Zh_tw'] for i in range(len(temp))]
+            temp=pd.concat([temp, pd.DataFrame.from_records(temp.ServiceDay)], axis=1)
+            station_info=temp.drop(['Timetables','ServiceDay'], axis=1)
+            rail_timetable_temp=pd.DataFrame({'Sequence':list(chain(*[list(map(lambda x : x['Sequence'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'TrainNo':list(chain(*[list(map(lambda x : x['TrainNo'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'DestinationStationID':list(chain(*[list(map(lambda x : x['DestinationStationID'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'DestinationStationName':list(chain(*[list(map(lambda x : x['DestinationStationName']['Zh_tw'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'TrainTypeID':list(chain(*[list(map(lambda x : x['TrainTypeID'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'TrainTypeCode':list(chain(*[list(map(lambda x : x['TrainTypeCode'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'TrainTypeName':list(chain(*[list(map(lambda x : x['TrainTypeName']['Zh_tw'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'ArrivalTime':list(chain(*[list(map(lambda x : x['ArrivalTime'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'DepartureTime':list(chain(*[list(map(lambda x : x['DepartureTime'], temp.Timetables[i])) for i in range(len(temp))]))})
+        elif operator in ["TRTC","KRTC","TYMC","NTDLRT","KLRT"]:
+            temp=pd.DataFrame(data_all)
+            temp.StationName=[temp.StationName[i]['Zh_tw'] for i in range(len(temp))]
+            temp.DestinationStationName=[temp.DestinationStationName[i]['Zh_tw'] for i in range(len(temp))]
+            temp=pd.concat([temp, pd.DataFrame.from_records(temp.ServiceDay)], axis=1)
+            station_info=temp.drop(['Timetables','ServiceDay','SrcUpdateTime','UpdateTime','VersionID'], axis=1)
+            rail_timetable_temp=pd.DataFrame({'Sequence':list(chain(*[list(map(lambda x : x['Sequence'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'ArrivalTime':list(chain(*[list(map(lambda x : x['ArrivalTime'], temp.Timetables[i])) for i in range(len(temp))])),
+                                              'DepartureTime':list(chain(*[list(map(lambda x : x['DepartureTime'], temp.Timetables[i])) for i in range(len(temp))]))})
+
+        num_of_table=[len(temp.Timetables[i]) for i in range(len(temp))]
+        station_info=station_info.iloc[np.repeat(np.arange(len(station_info)), num_of_table)].reset_index(drop=True)
+        rail_timetable=pd.concat([station_info, rail_timetable_temp], axis=1)  
+    
+    elif record=="general":
+        if operator=="TRA":
+            url="https://tdx.transportdata.tw/api/basic/v3/Rail/TRA/GeneralTrainTimetable?&$format=JSON"
+        elif operator=="THSR":
+            url="https://tdx.transportdata.tw/api/basic/v2/Rail/THSR/GeneralTimetable?&$format=JSON"
+        elif operator in ["TRTC","KRTC","TYMC","NTDLRT","KLRT"]:
+            return(warnings.warn("MRT system does not provide 'general' time table up to now! Please use 'station' time table.", UserWarning))
+        elif operator in ["AFR"]:
+            url="https://tdx.transportdata.tw/api/basic/v3/Rail/AFR/GeneralTrainTimetable?&%24format=JSON"
+        else:
+            print(tdx_railway())
+            return(warnings.warn("'"+operator+"' is not allowed operator. Please check out the table of railway code above.", UserWarning))
+
+        try:
+            data_response=requests.get(url, headers={'authorization': 'Bearer '+access_token})
+            if operator in ["TRA","AFR"]:
+                data_all=json.loads(data_response.text)['TrainTimetables']
+            else:
+                data_all=json.loads(data_response.text)
+        except:
+            return(warnings.warn("Your access token is invalid!", UserWarning))
+
+        if operator in ["TRA","AFR"]:
+            temp=pd.DataFrame(data_all)
+            train_info=pd.DataFrame.from_records(temp.TrainInfo)
+            train_info.TrainTypeName=[train_info.TrainTypeName[i]['Zh_tw'] for i in range(len(train_info))]
+            train_info.StartingStationName=[train_info.StartingStationName[i]['Zh_tw'] for i in range(len(train_info))]
+            train_info.EndingStationName=[train_info.EndingStationName[i]['Zh_tw'] for i in range(len(train_info))]
+            train_info=pd.concat([train_info, pd.DataFrame.from_records(temp.ServiceDay)], axis=1)
+            rail_timetable_temp=pd.DataFrame({'StopSequence':list(chain(*[list(map(lambda x : x['StopSequence'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'StationID':list(chain(*[list(map(lambda x : x['StationID'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'StationName':list(chain(*[list(map(lambda x : x['StationName']['Zh_tw'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'ArrivalTime':list(chain(*[list(map(lambda x : x['ArrivalTime'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'DepartureTime':list(chain(*[list(map(lambda x : x['DepartureTime'], temp.StopTimes[i])) for i in range(len(temp))]))})
+        elif operator=="THSR":            
+            temp=pd.DataFrame.from_records(pd.DataFrame(data_all)['GeneralTimetable'])
+            train_info=pd.DataFrame.from_records(temp.GeneralTrainInfo)
+            train_info.StartingStationName=[train_info.StartingStationName[i]['Zh_tw'] for i in range(len(train_info))]
+            train_info.EndingStationName=[train_info.EndingStationName[i]['Zh_tw'] for i in range(len(train_info))]
+            train_info=pd.concat([train_info, pd.DataFrame.from_records(temp.ServiceDay)], axis=1)
+
+            rail_timetable_temp=pd.DataFrame({'StopSequence':list(chain(*[list(map(lambda x : x['StopSequence'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'StationID':list(chain(*[list(map(lambda x : x['StationID'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'StationName':list(chain(*[list(map(lambda x : x['StationName']['Zh_tw'], temp.StopTimes[i])) for i in range(len(temp))])),
+                                              'ArrivalTime':list(chain(*[[temp.StopTimes[i][j]['ArrivalTime'] if 'ArrivalTime' in temp.StopTimes[i][j].keys() else None for j in range(len(temp.StopTimes[i]))] for i in range(len(temp))])),
+                                              'DepartureTime':list(chain(*[[temp.StopTimes[i][j]['DepartureTime'] if 'DepartureTime' in temp.StopTimes[i][j].keys() else None for j in range(len(temp.StopTimes[i]))] for i in range(len(temp))]))})
+
+            
+        num_of_station=[len(temp.StopTimes[i]) for i in range(len(temp))]
+        train_info=train_info.iloc[np.repeat(np.arange(len(train_info)), num_of_station)].reset_index(drop=True)
+        rail_timetable=pd.concat([train_info, rail_timetable_temp], axis=1)  
+    else:
+        return(warnings.warn("'"+record+"' is not valid format of timetable. Please use 'station' or 'general'.", UserWarning))        
+        
+    if out!=False:
+        rail_timetable.to_csv(out, index=False)
+    return(rail_timetable)
