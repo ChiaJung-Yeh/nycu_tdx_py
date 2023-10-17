@@ -6,41 +6,34 @@ import requests
 import json
 from tqdm import tqdm
 import warnings
-from itertools import compress
+from itertools import compress, chain
+import os
 
 
-def get_token(app_id, app_key):
-    auth_url="https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
-    class Auth():
-        def __init__(self, app_id, app_key):
-            self.app_id = app_id
-            self.app_key = app_key
-
-        def get_auth_header(self):
-            content_type = 'application/x-www-form-urlencoded'
-            grant_type = 'client_credentials'
-
-            return{
-                'content-type' : content_type,
-                'grant_type' : grant_type,
-                'client_id' : self.app_id,
-                'client_secret' : self.app_key
-            }
-
-    class data():
-        def __init__(self, app_id, app_key, auth_response):
-            self.app_id = app_id
-            self.app_key = app_key
-            self.auth_response = auth_response
-
-        def get_data_header(self):
-            auth_JSON = json.loads(self.auth_response.text)
-            access_token = auth_JSON.get('access_token')
-
-            return{'authorization': 'Bearer '+access_token}
-    auth_response=requests.post(auth_url, Auth(app_id, app_key).get_auth_header())
-    access_token=data(app_id, app_key, auth_response).get_data_header()
-    return(access_token)
+def get_token(client_id, client_secret):
+    json_post={'content-type':'application/x-www-form-urlencoded',
+               'grant_type':'client_credentials',
+               'client_id':client_id,
+               'client_secret':client_secret}
+    
+    if 'TDX_ACCESS_TOKEN' not in os.environ:
+        access_token=requests.post("https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token", json_post)
+    else:
+        access_token=os.environ['TDX_ACCESS_TOKEN']
+        test_api=requests.get('https://tdx.transportdata.tw/api/basic/v2/Basic/City?%24format=JSON', headers={'authorization': 'Bearer '+access_token})
+        if test_api.status_code==200:
+            print('The access token in the environment is still valid. Use it!')
+            return(access_token)
+        else:
+            access_token=requests.post("https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token", json_post)
+    
+    if 'error' in json.loads(access_token.text):
+        return(warnings.warn(json.loads(access_token.text)['error_description'], UserWarning))
+    else:
+        access_token=json.loads(access_token.text)['access_token']
+        os.environ['TDX_ACCESS_TOKEN']=access_token
+        print('Connect Successfully! This token will expire in 1 day. And it is stored temporarily in the environment.\n')
+        return(access_token)
 
 
 
